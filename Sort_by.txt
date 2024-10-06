@@ -1,0 +1,33 @@
+$folderPath = "C:\path\to\your\folder"
+
+$files = Get-ChildItem -Path $folderPath | Where-Object { !$_.PSIsContainer } | Sort-Object CreationTime
+
+$counter = 1
+
+foreach ($file in $files) {
+   
+    $cleanedFileName = $file.Name.Trim()
+
+    $baseFileName = [System.IO.Path]::GetFileNameWithoutExtension($cleanedFileName)
+
+    if ($baseFileName -match '^(.*) \[(\d+)\]$') {
+        $prefix = $matches[1]
+        $existingNumber = $matches[2]
+        
+        $newFileName = '{0:D3}_{1}' -f $counter, $prefix
+      
+        $newFileName += "($existingNumber)"
+    }
+    else {
+        $newFileName = '{0:D3}_{1}' -f $counter, $baseFileName
+    }
+
+    $newFileName += $file.Extension
+
+    $oldFilePath = $file.FullName
+    $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
+
+    [System.IO.File]::Move($oldFilePath, $newFilePath)
+
+    $counter++
+}
